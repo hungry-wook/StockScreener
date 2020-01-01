@@ -52,11 +52,7 @@ class BackTester:
 
         for date in tqdm(self.trading_days):
 
-            order = trading_algo.make_order(date,
-                                            self.market_data[:date], # Prevent look-ahead bias
-                                            self.cash,
-                                            self.holding_stocks,
-                                            self.context)
+            order = trading_algo.run(self.market_data[:date], self.context)
 
             # 주문 처리. 매수 / 매도 가능한지 확인 후 처리함. 성공/실패 내역은 logger에 기록
             self._handle_order(order, date)
