@@ -13,9 +13,13 @@ class Context:
     def record_asset(self, date, cash, holding_stocks:dict):
         self._asset_by_date[date] = {
             'cash': cash,
-            'holding_stocks': holding_stocks
-        }        
-    
+            'holding_stocks': holding_stocks.copy() # Needs value copy
+        }
+
+    def clear(self):
+        self._asset_by_date.clear()
+        self._custom_data.clear()
+
     ##### custom_data에 대한 operation #####
     def get(self, key):
         if key not in self._custom_data:

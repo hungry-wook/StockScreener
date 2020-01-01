@@ -33,8 +33,6 @@ class MarketData:
         trading_days = sorted(data['date'].unique())
 
         data['date'] = pd.to_datetime(data['date'])
-        
-        # TODO: date X stock_code multi-indexing 가능한지?
         data = data.sort_values('date').set_index('date')
         
         return data, trading_days

@@ -1,4 +1,8 @@
+from tqdm import tqdm
 from data import MarketData
+from context import Context
+from logger import Logger
+from order import Order
 from trading_algorithm import TradingAlgorithm
 
 
@@ -9,8 +13,8 @@ class BackTester:
                  initial_cash: float,
                  start_date=None, # YYYY-MM-DD
                  end_date=None, # YYYY-MM-DD
-                 commission_buy=0.0: float,
-                 commission_sell=0.033: float):
+                 commission_buy=0.0,
+                 commission_sell=0.033):
 
         ##### 테스트 데이터 (전체 기간) #####
         self.market_data = market_data
@@ -33,40 +37,47 @@ class BackTester:
 
         ##### 컨텍스트 변수 #####
         self.context = Context() # TradingAlgorithm이 read/write 할 수 있는 컨텍스트 정보
-        
+
         ##### Order Log #####
-        self.order_log = []
-        
+        self.logger = Logger()
+
         #### 테스트 결과 #####
         self.result = dict()
-        
+
     def run(self, trading_algo: TradingAlgorithm):
 
-        for date in self.trading_days:
-            
-            market_data = self.market_data[:date] # Prevent look-ahead bias
+        self._init()
+
+        for date in tqdm(self.trading_days):
 
             order = trading_algo.make_order(date,
-                                            market_data,
+                                            self.market_data[:date], # Prevent look-ahead bias
                                             self.cash,
                                             self.holding_stocks,
                                             self.context)
             
             # TODO: 성공한 주문, 실패한 주문에 대해서 어떻게 기록할지 정해야함
-            self._handle_order(order, date, market_data)
+            self._handle_order(order, date)
             
             # 현재 자산(현금, 보유 주식)을 context에 기록
-            self.context.record_asset(date, self.cash, self.holding_stocks)
+            self._record_asset(date)
 
-        result = self._evaluate_performance(date, market_data)
+        result = self._evaluate_performance(date)
 
         return result
 
-    def _handler_order(self, order: Order, date, market_data):
+    def _init(self):
+        self.cash = self.initial_cash
+        self.holding_stocks.clear()
+        self.context.clear()
+        self.logger.clear()
+        self.result.clear()
+
+    def _handle_order(self, order: Order, date):
 
         for stock_code, quantity in order:
             
-            price = market_data[date, stock_code].close # 종가
+            price = self.market_data[date, stock_code].close # 종가
             
             # sell
             if quantity < 0: 
@@ -74,16 +85,15 @@ class BackTester:
                 # 보유 주식량 >= 매도량인지 체크
                 if holding_stocks.get(stock_code, 0) >= (-quantity):
                     self.cash += (-quantity) * price * (1 - self.commission_sell)
-                    self.holding_stocks[stock_code] += quantity
-                    order_log.append('date={}|stock_code={}|quantity={}|is_success={}'.format(date, stock_code, quantity, True))
+                    self.holding_stocks[stock_code] += quantity                    
+                    self.logger.order(date, stock_code, price, quantity, self.cash, True)
 
                 else:
-                    order_log.append('date={}|stock_code={}|quantity={}|is_success={}'.format(date, stock_code, quantity, False))
-                    pass
-            
+                    self.logger.order(date, stock_code, price, quantity, self.cash, False)
+
             # buy
             else:
-                
+
                 # 매수 가능한 현금이 있는지 체크
                 if self.cash >= quantity * price * (1 + self.commission_buy):
 
@@ -92,26 +102,26 @@ class BackTester:
                     if stock_code not in self.holding_stocks:
                         self.holding_stocks[stock_code] = 0
                     self.holding_stocks[stock_code] += quantity
-                    order_log.append('date={}|stock_code={}|quantity={}|is_success={}'.format(date, stock_code, quantity, True))
+                    self.logger.order(date, stock_code, price, quantity, self.cash, True)
 
                 else:
-                    order_log.append('date={}|stock_code={}|quantity={}|is_success={}'.format(date, stock_code, quantity, False))
-                    pass
-                    
-    def _evaluate_performance(self, date, market_data):
-        
+                    self.logger.order(date, stock_code, price, quantity, self.cash, False)
+
+    def _record_asset(self, date):
+        self.context.record_asset(date, self.cash, self.holding_stocks)
+
+    def _evaluate_performance(self, date):
+
         result = dict()
-        
         portfolio_value = 0
-        
+
         # TODO: 포트폴리오 가치 변화를 일별로 볼 수 있게
-        
         for stock_code, quantity in self.holding_stocks.items():
-            price = market_data[date, stock_code].close # 종가
-            portfolio_value += price * quantity
-            
+            price = self.market_data[date, stock_code].close # 종가
+            portfolio_value += quantity * price * (1 - self.commission_sell)
+
         portfolio_value += self.cash
-        
+
         result['return'] = (portfolio_value - self.initial_cash) / self.initial_cash
-        
+
         return result
