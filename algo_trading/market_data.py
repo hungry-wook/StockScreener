@@ -11,7 +11,7 @@ class MarketData:
 
     def _load_data(self, data_path):
 
-        data = pd.read_csv(data_path)
+        data = pd.read_csv(data_path, dtype={'Symbol':str})
         trading_days = sorted(data['Date'].unique())
         data['Date'] = pd.to_datetime(data['Date'])
         data = data.sort_values('Date').set_index('Date')

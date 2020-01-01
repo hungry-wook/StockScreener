@@ -78,20 +78,25 @@ class BackTester:
     def _handle_order(self, order: Order, date):
 
         for symbol, quantity in order:
-            
-            price = self.market_data[date, symbol].close # 종가
-            
+
+            # Price unavailable
+            try:
+                price = self.market_data[date, symbol].Close # 종가
+            except:
+                self.logger.info('[fail(2)]:({},{},{})'.format(date, symbol, quantity))
+                continue
+
             # sell
             if quantity < 0: 
-                
+
                 # 보유 주식량 >= 매도량인지 체크
                 if holding_stocks.get(symbol, 0) >= (-quantity):
                     self.cash += (-quantity) * price * (1 - self.commission_sell)
                     self.holding_stocks[symbol] += quantity                    
-                    self.logger.order(date, symbol, price, quantity, self.cash, True)
+                    self.logger.info('[success(0)]:({},{},{})'.format(date, symbol, quantity))
 
                 else:
-                    self.logger.order(date, symbol, price, quantity, self.cash, False)
+                    self.logger.info('[fail(1)]:({},{},{})'.format(date, symbol, quantity))
 
             # buy
             else:
@@ -104,10 +109,10 @@ class BackTester:
                     if symbol not in self.holding_stocks:
                         self.holding_stocks[symbol] = 0
                     self.holding_stocks[symbol] += quantity
-                    self.logger.order(date, symbol, price, quantity, self.cash, True)
+                    self.logger.info('[success(0)]:({},{},{})'.format(date, symbol, quantity))
 
                 else:
-                    self.logger.order(date, symbol, price, quantity, self.cash, False)
+                    self.logger.info('[fail(1)]:({},{},{})'.format(date, symbol, quantity))
 
     def _record_asset(self, date):
         self.context.record_asset(date, self.cash, self.holding_stocks)
@@ -119,7 +124,7 @@ class BackTester:
 
         # TODO: 포트폴리오 가치 변화를 일별로 볼 수 있게
         for symbol, quantity in self.holding_stocks.items():
-            price = self.market_data[date, symbol].close # 종가
+            price = self.market_data[date, symbol].Close # 종가
             portfolio_value += quantity * price * (1 - self.commission_sell)
 
         portfolio_value += self.cash
