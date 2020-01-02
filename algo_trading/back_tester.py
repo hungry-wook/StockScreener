@@ -14,9 +14,8 @@ class BackTester:
                  start_date=None, # YYYY-MM-DD
                  end_date=None, # YYYY-MM-DD
                  commission_buy=0.0,
-                 commission_sell=0.033):
-
-        # TODO: kospi index의 수익률을 베이스로 알고리즘의 수익률을 벤치마킹
+                 commission_sell=0.033,
+                 benchmark_symbol='KS11'):
 
         ##### 테스트 데이터 (전체 기간) #####
         self.market_data = market_data
@@ -43,6 +42,9 @@ class BackTester:
         ##### Order Log #####
         self.logger = Logger()
 
+        ##### 벤치마킹 대상 #####
+        self.benchmark_symbol = benchmark_symbol
+
         #### 테스트 결과 #####
         self.result = dict()
 
@@ -60,7 +62,7 @@ class BackTester:
             # 현재 자산(현금, 보유 주식)을 context에 기록
             self._record_asset(date)
 
-        result = self._evaluate_performance(date)
+        result = self._evaluate_performance()
 
         return result
 
@@ -113,18 +115,26 @@ class BackTester:
     def _record_asset(self, date):
         self.context.record_asset(date, self.cash, self.holding_stocks)
 
-    def _evaluate_performance(self, date):
+    def _evaluate_performance(self):
 
         result = dict()
         portfolio_value = 0
 
-        # TODO: 포트폴리오 가치 변화를 일별로 볼 수 있게
+        # TODO: 포트폴리오 가치 변화를 일별로 볼 수 있게. 변동성도
         for symbol, quantity in self.holding_stocks.items():
-            price = self.market_data[date, symbol].Close # 종가
+            price = self.market_data[self.trading_days[-1], symbol].Close # 종가
             portfolio_value += quantity * price * (1 - self.commission_sell)
 
+        # 포트폴리오 수익률
         portfolio_value += self.cash
+        portfolio_return = (portfolio_value - self.initial_cash) / self.initial_cash
+        result['return'] = portfolio_return
 
-        result['return'] = (portfolio_value - self.initial_cash) / self.initial_cash
+        # 벤치마크 수익률
+        benchmark_initial_value = self.market_data[self.trading_days[0], self.benchmark_symbol].Close
+        benchmark_end_value = self.market_data[self.trading_days[-1], self.benchmark_symbol].Close
+        benchmark_return = (benchmark_end_value - benchmark_initial_value) / benchmark_initial_value
 
+        # 조정 수익률 = 포트폴리오 수익률 - 벤치마크 수익률
+        result['adjusted_return'] = portfolio_return - benchmark_return
         return result
