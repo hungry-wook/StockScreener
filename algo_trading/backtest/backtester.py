@@ -1,9 +1,9 @@
 from tqdm import tqdm
 from algo_trading.market_data import MarketData
-from algo_trading.context import Context
-from algo_trading.logger import Logger
-from algo_trading.order import Order
-from algo_trading.trading_algorithm import TradingAlgorithm
+from algo_trading.backtest.context import Context
+from algo_trading.backtest.logger import Logger
+from algo_trading.backtest.order import Order
+from algo_trading.backtest.trading_algorithm import TradingAlgorithm
 
 
 class BackTester:

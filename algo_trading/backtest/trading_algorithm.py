@@ -1,7 +1,7 @@
 import pandas as pd
 from abc import ABC, abstractmethod
-from algo_trading.context import Context
-from algo_trading.order import Order
+from algo_trading.backtest.context import Context
+from algo_trading.backtest.order import Order
 from algo_trading.market_data import MarketData
 
 
