@@ -54,7 +54,7 @@ class BackTester:
 
         for date in tqdm(self.trading_days):
 
-            order = trading_algo.run(self.market_data[:date], self.context)
+            order = trading_algo.run(date, self.market_data, self.context)
 
             # 주문 처리. 매수 / 매도 가능한지 확인 후 처리함. 성공/실패 내역은 logger에 기록
             self._handle_order(order, date)
@@ -88,7 +88,7 @@ class BackTester:
             if quantity < 0: 
 
                 # 보유 주식량 >= 매도량인지 체크
-                if holding_stocks.get(symbol, 0) >= (-quantity):
+                if self.holding_stocks.get(symbol, 0) >= (-quantity):
                     self.cash += (-quantity) * price * (1 - self.commission_sell)
                     self.holding_stocks[symbol] += quantity                    
                     self.logger.info('[success(0)]:({},{},{})'.format(date, symbol, quantity))
