@@ -131,8 +131,8 @@ class BackTester:
         result['return'] = portfolio_return
 
         # 벤치마크 수익률
-        benchmark_initial_value = self.market_data[self.trading_days[0], self.benchmark_symbol].Close
-        benchmark_end_value = self.market_data[self.trading_days[-1], self.benchmark_symbol].Close
+        benchmark_initial_value = self.market_data[self.benchmark_symbol, self.trading_days[0]].Close
+        benchmark_end_value = self.market_data[self.benchmark_symbol, self.trading_days[-1]].Close
         benchmark_return = (benchmark_end_value - benchmark_initial_value) / benchmark_initial_value
 
         # 조정 수익률 = 포트폴리오 수익률 - 벤치마크 수익률

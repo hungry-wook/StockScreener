@@ -12,14 +12,17 @@ class MarketData:
 
     def _load_data(self, data_path):
 
-        data = pd.read_csv(data_path, dtype={'Symbol':str})
-        trading_days = sorted(data['Date'].unique())
-        data['Date'] = pd.to_datetime(data['Date'])
-        data = data.sort_values('Date').set_index('Date')
-        
+        df = pd.read_csv(data_path, dtype={'Symbol':str})
+        trading_days = sorted(df['Date'].unique())
+
+        df['Date'] = pd.to_datetime(df['Date'])
+        df = df.sort_values('Date').set_index('Date')
+
+        data = {k: v for k, v in df.groupby('Symbol')}
+
         return data, trading_days
 
-    def get_recent(self, date, symbol, n_days) -> pd.DataFrame:
+    def get_recent(self, symbol, date, n_days) -> pd.DataFrame:
 
         # date로부터 1일전 ~ n일전 데이터 반환
 
@@ -30,7 +33,7 @@ class MarketData:
 
         elif date <= self.trading_days[0]:
             # 빈 프레임 반환 (컬럼, 인덱스는 유지)
-            return self['1900':'1900']
+            return self[symbol, '1900':'1900']
 
         else:
 
@@ -49,41 +52,30 @@ class MarketData:
                 start_date = self.trading_days[0]
                 end_date = self.trading_days[idx - 1]
 
-        return self[start_date:end_date, symbol]
+        return self[symbol, start_date:end_date]
 
     def __getitem__(self, key):
 
         if isinstance(key, tuple):
             
-            # market_data[from_date:to_date, symbol] 범위 양끝 날짜의 데이터 포함
-            if isinstance(key[0], slice):
-                from_date, to_date = key[0].start, key[0].stop
+            # market_data[symbol, from_date:to_date] (범위 양끝 날짜의 데이터 포함)
+            if isinstance(key[1], slice):
+                symbol = key[0]
+                from_date, to_date = key[1].start, key[1].stop
                 if not from_date:
                     from_date = self.trading_days[0]
                 if not to_date:
                     to_date = self.trading_days[-1]
-                symbol = key[1]
-                df = self.data[from_date:to_date]
-                df = df.loc[df['Symbol'] == symbol]
-                return df
+                df = self.data[symbol][from_date:to_date]
+                return df # pd.DataFrame
 
-            # market_data[date, symbol]
+            # market_data[symbol, date]
             else:
-                date, symbol = key
-                df = self.data[date:date]
-                df = df.loc[df['Symbol'] == symbol].iloc[0] # pd.Series
-                return df
+                symbol, date = key
+                df = self.data[symbol][date:date].iloc[0]
+                return df # pd.Series
 
-        # market_data[from_date:to_date] 범위 양끝 날짜의 데이터 포함
-        elif isinstance(key, slice):
-            from_date, to_date = key.start, key.stop
-            if not from_date:
-                from_date = self.trading_days[0]
-            if not to_date:
-                to_date = self.trading_days[-1]
-            return self.data[from_date:to_date]
-
-        # market_data[date]
+        # market_data[symbol]
         else:
-            date = key
-            return self.data[date:date]
+            symbol = key
+            return self.data[symbol] # pd.DataFrame
