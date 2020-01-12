@@ -79,7 +79,7 @@ class BackTester:
 
             # Price unavailable
             try:
-                price = self.market_data[date, symbol].Close # 종가
+                price = self.market_data[symbol, date].Close # 종가
             except:
                 self.logger.info('[fail(2)]:({},{},{})'.format(date, symbol, quantity))
                 continue
@@ -122,7 +122,7 @@ class BackTester:
 
         # TODO: 포트폴리오 가치 변화를 일별로 볼 수 있게. 변동성도
         for symbol, quantity in self.holding_stocks.items():
-            price = self.market_data[self.trading_days[-1], symbol].Close # 종가
+            price = self.market_data[symbol, self.trading_days[-1]].Close # 종가
             portfolio_value += quantity * price * (1 - self.commission_sell)
 
         # 포트폴리오 수익률

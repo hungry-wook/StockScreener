@@ -3,9 +3,9 @@ class Order:
     def __init__(self):
         self._queue = []
         
-    def add(self, stock_code: str, quantity: int):
+    def add(self, symbol: str, quantity: int):
         # 매수: + quantity, 매도: - quantity
-        self._queue.append((stock_code, quantity))
+        self._queue.append((symbol, quantity))
     
     def pop(self):
         # FIFO
