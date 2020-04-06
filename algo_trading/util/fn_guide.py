@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -11,12 +12,15 @@ def get_corp_code():
     return corp_df
 
 def get_brief_metrics(code):
-    html = requests.get('https://comp.fnguide.com/SVO2/asp/SVD_Main.asp?gicode=A{}'.format(code)).content
-    soup = BeautifulSoup(html, 'html.parser')
-    metrics = ['PER', '12M_PER', '업종_PER', 'PBR', '배당수익률']
-    figures = soup.find(class_='corp_group2').find_all('dd')
-    figures = [float(x.text.replace('%', '')) \
-               for i, x in enumerate(figures) if i % 2 == 1]
+    try:
+        html = requests.get('https://comp.fnguide.com/SVO2/asp/SVD_Main.asp?gicode=A{}'.format(code)).content
+        soup = BeautifulSoup(html, 'html.parser')
+        metrics = ['PER', '12M_PER', '업종_PER', 'PBR', '배당수익률']
+        figures = soup.find(class_='corp_group2').find_all('dd')
+        figures = [x.text.replace('%', '') for i, x in enumerate(figures) if i % 2 == 1]
+        figures = [float(x) if x != '-' else np.NaN for x in figures]
+    except:
+        return {}
     return {m:f for m,f in zip(metrics, figures)}
 
 def get_financial_highlight(code):
