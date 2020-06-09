@@ -17,7 +17,7 @@ class DataReader:
 
         def postprocess_df(df, data_type):
             _df = df[data_type].copy()
-            _df = _df[[x for x in _df.columns if '(' not in x]].T
+            _df = _df.T
             _df.columns = df['IFRS(연결)'].values.flatten()
             return _df
 
