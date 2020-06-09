@@ -1,5 +1,5 @@
 from tqdm import tqdm
-from algo_trading.market_data import MarketData
+from algo_trading.backtest.market_data import MarketData
 from algo_trading.backtest.context import Context
 from algo_trading.backtest.logger import Logger
 from algo_trading.backtest.order import Order
