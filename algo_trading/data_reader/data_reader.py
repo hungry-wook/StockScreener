@@ -21,9 +21,20 @@ class DataReader:
             _df.columns = df['IFRS(연결)'].values.flatten()
             return _df
 
-        data = pd.read_html('https://comp.fnguide.com/SVO2/asp/SVD_Main.asp?gicode=A{}'.format(code))
-        annual_data = postprocess_df(data[11], 'Annual') # 최근 5개년
-        quarter_data = postprocess_df(data[12], 'Net Quarter') # 최근 5분기
+        url = 'https://comp.fnguide.com/SVO2/asp/SVD_Main.asp?gicode=A{}'.format(code)
+        try:
+            data = pd.read_html(url)
+        except:
+            return None, None
+
+        try:
+            annual_data = postprocess_df(data[11], 'Annual') # 최근 5개년
+        except:
+            annual_data = None
+        try:
+            quarter_data = postprocess_df(data[12], 'Net Quarter') # 최근 5분기
+        except:
+            quarter_data = None
 
         return annual_data, quarter_data
 
@@ -47,14 +58,23 @@ class DataReader:
             return df
 
         url = 'https://comp.fnguide.com/SVO2/asp/SVD_Finance.asp?gicode=A{}'.format(code)
-        data = pd.read_html(url)
+        try:
+            data = pd.read_html(url)
+        except:
+            return None, None
 
         # 연간 포괄손익계산서 / 연간 재무상태표 / 연간 현금흐름표 (최근 4년)
-        annual_data = pd.concat((data[0], data[2], data[4]), sort=False)
-        annual_data = postprocess_df(annual_data)
+        try:
+            annual_data = pd.concat((data[0], data[2], data[4]), sort=False)
+            annual_data = postprocess_df(annual_data)
+        except:
+            annual_data = None
 
         # 분기 포괄손익계산서 / 분기 재무상태표 / 분기 현금흐름표 (최근 4분기)
-        quarter_data = pd.concat((data[1], data[3], data[5]), sort=False)
-        quarter_data = postprocess_df(quarter_data)
+        try:
+            quarter_data = pd.concat((data[1], data[3], data[5]), sort=False)
+            quarter_data = postprocess_df(quarter_data)
+        except:
+            quarter_data = None
 
         return annual_data, quarter_data
