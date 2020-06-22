@@ -78,3 +78,11 @@ class DataReader:
             quarter_data = None
 
         return annual_data, quarter_data
+
+    def get_kospi200_price(self):
+        dfs = []
+        for i in range(1, 20 + 1):
+            df = pd.read_html('https://finance.naver.com/sise/entryJongmok.nhn?&page={}'.format(i))[0]
+            dfs.append(df)
+        kospi200_price = pd.concat(dfs).dropna().reset_index(drop=True)
+        return kospi200_price
