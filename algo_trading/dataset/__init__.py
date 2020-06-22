@@ -34,11 +34,11 @@ def download_financial_summary_data():
         pickle.dump(data, f)
     print('Download Completed!')
 
-def load_financial_summary_data():
+def load_financial_summary_data(update=False):
 
     path = os.path.join(DATASET_DIR, 
                         FINANCIAL_SUMMARY_DATA_FILENAME)
-    if not os.path.exists(path):
+    if (not os.path.exists(path)) or update:
         download_financial_summary_data()
 
     with open(path, 'rb') as f:
@@ -67,11 +67,11 @@ def download_stock_price_data(start='2001-01-01'):
         pickle.dump(data, f)
     print('Download Completed!')
 
-def load_stock_price_data():
+def load_stock_price_data(update=False):
 
     path = os.path.join(DATASET_DIR,
                         STOCK_PRICE_DATA_FILENAME)
-    if not os.path.exists(path):
+    if (not os.path.exists(path)) or update:
         download_stock_price_data()
 
     with open(path, 'rb') as f:
