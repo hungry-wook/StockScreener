@@ -110,6 +110,7 @@ def download_deposit_data():
                     '펀드_주식형', '펀드_혼합형', '펀드_채권형']
     data.index = pd.to_datetime(data['날짜'].apply(lambda x: '20' + x))
     data.drop('날짜', axis=1, inplace=True)
+    data = data.iloc[::-1]
 
     with open(os.path.join(DATASET_DIR,
                            DEPOSIT_DATA_FILENAME), 'wb') as f:
