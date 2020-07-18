@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 
@@ -17,17 +18,23 @@ def rim_price(annual_data: pd.DataFrame, year:int,
         - 적정 주가(float)
     """
     book_value = annual_data.loc['{}/12'.format(year)]['지배주주지분']
-    try:
+
+    next_year = '{}/12(E)'.format(year+1)
+    if (next_year in annual_data.index) and \
+        (not np.isnan(annual_data.loc[next_year]['ROE'])):
         # 내년도 컨센서스 존재하는 경우
-        return_on_equity = annual_data.loc['{}/12(E)'.format(year+1)]['ROE']
-    except:
-        # 내년도 컨센서스가 없는 경우. N개년 가중평균하여 추정
+        return_on_equity = annual_data.loc[next_year]['ROE']
+    else:
+        # 내년도 컨센서스가 없는 경우. 직전 N개년도 데이터 가중평균하여 추정
         return_on_equity = 0
         denominator = 0
         for i in range(0, n_lookback_year):
             _return_on_equity = annual_data.loc['{}/12'.format(year-i)]['ROE']
-            return_on_equity += (n_lookback_year - i) * _return_on_equity
-            denominator += (i+1)
+            if np.isnan(_return_on_equity):
+                continue
+            else:
+                return_on_equity += (n_lookback_year - i) * _return_on_equity
+                denominator += (i+1)
         return_on_equity /= denominator
 
     return_on_equity /= 100
