@@ -4,7 +4,7 @@ import pickle
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
-from algo_trading.data_reader import DataReader
+from stock_screener.data_reader import DataReader
 
 
 DATASET_DIR = '/'.join(os.path.abspath(__file__).split('/')[:-3])
