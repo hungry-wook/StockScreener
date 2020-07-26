@@ -15,7 +15,7 @@ def rim_price(annual_data: pd.DataFrame, year:int,
         - n_lookback_year: ROE에 대한 컨센서스가 없는 경우, ROE 추정에 활용할 데이터 개수
 
     Output
-        - 적정 주가(float)
+        - 적정 주가(int)
         - RIM 계산에 필요한 데이터가 불충분한 경우에는 exception을 발생시킨다
     """
 
@@ -69,6 +69,6 @@ def rim_price(annual_data: pd.DataFrame, year:int,
 
     excess_return = book_value * (return_on_equity - required_return)
     company_value = book_value + excess_return / required_return
-    stock_value = company_value * 1e8 / num_stock
+    stock_value = int(company_value * 1e8 / num_stock)
 
     return stock_value
