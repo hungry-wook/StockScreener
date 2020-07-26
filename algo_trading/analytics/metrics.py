@@ -73,26 +73,74 @@ def rim_price(annual_data: pd.DataFrame, year:int,
 
     return stock_value
 
-def is_profit_ratio_growing(annual_data: pd.DataFrame,
-                            start_year: int, end_year: int):
+def check_metric_increasing(annual_data: pd.DataFrame,
+                            start_year: int, end_year: int,
+                            metric: str,
+                            should_be_positive=False):
 
     """
-    최근 n년간의 영업이익률에 대해, 다음 조건들을 만족하는지 체크한다
-    1) 영업이익률이 양수
-    2) 영업이익률이 증가하는 추세 (단조 증가)
+    최근 n년간의 특정 재무지표의 값이 단조 증가했는지 체크한다
+    Inputs
+        - annual_data: 연단위 재무제표 데이터
+        - start_year: 고려 대상 데이터 시작년도
+        - end_year: 고려 대상 데이터 종료년도
+        - metric: 재무지표 명 (i.e. 영업이익)
+        - should_be_positive: 재무지표의 값이 항상 0보다 커야함을 조건에 추가
     """
-    prev_profit = annual_data['영업이익률'].loc['{}/12'.format(start_year)]
+    if metric not in annual_data:
+        raise ValueError('Available metrics = [{}]'.format(list(annual_data.columns)))
+        
+    prev_value = annual_data[metric].loc['{}/12'.format(start_year)]
 
     for i in range(end_year - start_year + 1):
 
-        profit = annual_data['영업이익률'].loc['{}/12'.format(start_year + i)]
+        value = annual_data[metric].loc['{}/12'.format(start_year + i)]
+ 
+        if should_be_positive:
+            if value < 0:
+                return False
 
-        if np.isnan(profit) or profit < 0:
+        if np.isnan(value):
             return False
-
-        if profit < prev_profit:
+        elif value < prev_value:
             return False
         else:
-            prev_profit = profit
+            prev_value = value
+
+    return True
+
+def check_metric_decreasing(annual_data: pd.DataFrame,
+                            start_year: int, end_year: int,
+                            metric: str,
+                            should_be_positive=False):
+
+    """
+    최근 n년간의 특정 재무지표의 값이 단조 감소했는지 체크한다
+    Inputs
+        - annual_data: 연단위 재무제표 데이터
+        - start_year: 고려 대상 데이터 시작년도
+        - end_year: 고려 대상 데이터 종료년도
+        - metric: 재무지표 명 (i.e. 영업이익)
+        - should_be_positive: 재무지표의 값이 항상 0보다 커야함을 조건에 추가
+    """
+    if metric not in annual_data:
+        raise ValueError('Available metrics = [{}]'.format(list(annual_data.columns)))
+
+    prev_value = annual_data[metric].loc['{}/12'.format(start_year)]
+
+    for i in range(end_year - start_year + 1):
+
+        value = annual_data[metric].loc['{}/12'.format(start_year + i)]
+
+        if should_be_positive:
+            if value < 0:
+                return False
+
+        if np.isnan(value):
+            return False
+        elif value >= prev_value:
+            return False
+        else:
+            prev_value = value
 
     return True
