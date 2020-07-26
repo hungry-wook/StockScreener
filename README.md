@@ -1,1 +1,1 @@
-# algo_trading
+# Stock Screener
