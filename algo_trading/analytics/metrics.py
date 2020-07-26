@@ -72,3 +72,27 @@ def rim_price(annual_data: pd.DataFrame, year:int,
     stock_value = int(company_value * 1e8 / num_stock)
 
     return stock_value
+
+def is_profit_ratio_growing(annual_data: pd.DataFrame,
+                            start_year: int, end_year: int):
+
+    """
+    최근 n년간의 영업이익률에 대해, 다음 조건들을 만족하는지 체크한다
+    1) 영업이익률이 양수
+    2) 영업이익률이 증가하는 추세 (단조 증가)
+    """
+    prev_profit = annual_data['영업이익률'].loc['{}/12'.format(start_year)]
+
+    for i in range(end_year - start_year + 1):
+
+        profit = annual_data['영업이익률'].loc['{}/12'.format(start_year + i)]
+
+        if np.isnan(profit) or profit < 0:
+            return False
+
+        if profit < prev_profit:
+            return False
+        else:
+            prev_profit = profit
+
+    return True
