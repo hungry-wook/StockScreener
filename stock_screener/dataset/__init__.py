@@ -4,7 +4,7 @@ import pickle
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
-from stock_screener.data_reader import DataReader
+from stock_screener.data_reader import *
 
 
 DATASET_DIR = '/'.join(os.path.abspath(__file__).split('/')[:-3])
@@ -25,11 +25,10 @@ def download_financial_summary_data():
     print('Start Downloading Financial Summary Data...')
     _make_dir()
 
-    dr = DataReader()
-    corp_data = dr.get_corporation_data()
+    corp_data = get_corporation_data()
     data = dict()
     for code in tqdm(corp_data['종목코드']):
-        a, q = dr.get_financial_summary(code)
+        a, q = get_financial_summary(code)
         if not (a is None and q is None):
             data[code] = {'annual':a, 'quarter':q}
 
@@ -56,15 +55,14 @@ def download_stock_price_data(start='2001-01-01'):
     print('Start Downloading Stock Price Data...')
     _make_dir()
 
-    dr = DataReader()
-    corp_data = dr.get_corporation_data()
+    corp_data = get_corporation_data()
     data = dict()
     for code in tqdm(corp_data['종목코드']):
-        df = dr.get_stock_price(code, start)
+        df = get_stock_price(code, start)
         if len(df) > 0:
             data[code] = df
-    data['KOSPI'] = dr.get_stock_price('KS11', start)
-    data['KOSDAQ'] = dr.get_stock_price('KQ11', start)
+    data['KOSPI'] = get_stock_price('KS11', start)
+    data['KOSDAQ'] = get_stock_price('KQ11', start)
 
     with open(os.path.join(DATASET_DIR,
                            STOCK_PRICE_DATA_FILENAME), 'wb') as f:
