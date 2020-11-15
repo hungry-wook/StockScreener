@@ -130,7 +130,48 @@ def get_financial_summary(code, remove_estimation=True):
 
     if remove_estimation:
         # len('2020/06') == 7, len('2020/09(E)') != 7
-        annual_data = annual_data.loc[[len(x) == 7 for x in annual_data.index]]
-        quarter_data = quarter_data.loc[[len(x) == 7 for x in quarter_data.index]]
+        try:
+            annual_data = annual_data.loc[[len(x) == 7 for x in annual_data.index]]
+        except:
+            annual_data = None
+        try:
+            quarter_data = quarter_data.loc[[len(x) == 7 for x in quarter_data.index]]
+        except:
+            quarter_data = None
 
     return annual_data, quarter_data
+
+def pass_criteria(code):
+
+    # 재무제표 데이터에서 원하는 조건을 만족하는 경우 True, 아니면 False 반환
+    annual_data, quarter_data = get_financial_summary(code)
+
+    try:
+        # 최근 3개년 영업이익 흑자
+        num_year = 3
+        annual_profit = annual_data['영업이익'].tail(num_year)
+        if not all(x > 0 for x in annual_profit):
+            return False
+
+        # 최근 3개년 ROE >= 8
+        num_year = 3
+        annual_roe = annual_data['ROE'].tail(num_year)
+        if not all(x >= 8 for x in annual_roe):
+            return False
+
+        # 최근 3개년 배당수익률 >= 2
+        num_year = 3
+        annual_dvd = annual_data['배당수익률'].tail(num_year)
+        if not all(x >= 2 for x in annual_dvd):
+            return False
+
+        # 최근 4분기 영업이익 흑자
+        num_quarter = 4
+        quarter_profit = quarter_data['영업이익'].tail(num_quarter)
+        if not all(x > 0 for x in quarter_profit):
+            return False
+    except:
+        # 체크하려는 값이 nan인 경우거나, 데이터가 불충분한 경우
+        return False
+
+    return True
