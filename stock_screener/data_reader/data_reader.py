@@ -133,7 +133,7 @@ def get_per_pbr_dividend(date):
 
     if not result.content:
         raise ValueError('Empty Result!')
-
+    
     # Make DataFrame
     df = pd.DataFrame(json.loads(result.content)['result'])
 
@@ -168,6 +168,54 @@ def get_per_pbr_dividend(date):
 
     return df
 
+def get_per_pbr_dividend2(date):
+    # Input: date(str): 최근 거래일, YYYYMMDD format
+    # Output: 해당 일자 기준, KOSPI/KOSDAQ 종목별 PER/PBR/배당률 정보
+    # get_per_pbr_dividend 오류시 사용
+
+    # Get Data 
+    result = requests.post("http://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd"
+                        , headers = {'User-Agent': 'Mozilla/5.0'}
+                        , params = dict(bld= 'dbms/MDC/STAT/standard/MDCSTAT03501'
+                                , searchType=	1
+                                , mktId=	'ALL'
+                                , trdDd=	date
+                                , isuCd=	'KR7005930003'
+                        ))
+    
+    if not result.content:
+        raise ValueError('Empty Result!')
+    
+    # Make DataFrame
+    df = pd.DataFrame(json.loads(result.content)['output'])
+
+    # Rename Columns, Remove unused columns
+    columns={
+        'DVD_YLD':'배당수익률'
+        , 'TDD_CLSPRC':'종가'
+        , 'ISU_SRT_CD':'종목코드'
+        , 'ISU_ABBRV':'종목명'
+    }
+    df = df.rename(columns=columns)
+    df = df[['종목명', '종목코드', '종가', 'PER', 'PBR', '배당수익률']]
+
+    # Preprocess Variables
+    df['기준일'] = date
+    for col in ['종가', 'PER', 'PBR', '배당수익률']:
+        df[col] = df[col].apply(lambda x: x.replace(',', ''))
+    df = df.replace(to_replace='-', value=np.NaN)
+    df = df.replace(to_replace='', value=np.NaN)
+    df = df.astype({
+        '종목명':str,
+        '종목코드':str,
+        '종가':int,
+        'PER':float,
+        'PBR':float,
+        '배당수익률':float
+    })
+
+    return df
+
 def get_sector(date):
 
     # WiseIndex에서 제공하는 WICS 섹터 분류를 가져옴
@@ -186,7 +234,7 @@ def get_sector(date):
         url = url.format(date, sec_cd)
         r = requests.get(url)
         df = pd.DataFrame(json.loads(r.content.decode('utf-8'))['list'])
-
+        
         # Rename Columns, Remove unused columns
         columns={
             'CMP_CD':'종목코드',
