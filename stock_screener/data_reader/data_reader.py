@@ -118,41 +118,31 @@ def get_per_pbr_dividend(date):
     # Input: date(str): 최근 거래일, YYYYMMDD format
     # Output: 해당 일자 기준, KOSPI/KOSDAQ 종목별 PER/PBR/배당률 정보
 
-    # Get OTP
-    otp = requests.get('http://marketdata.krx.co.kr/contents/COM/GenerateOTP.jspx', 
-                   headers={'User-Agent': 'Mozilla/5.0'},
-                   params=dict(name='form', 
-                               bld='MKD/13/1302/13020401/mkd13020401'))
-    # Get Data (with OTP generated above)
-    result = requests.post('http://marketdata.krx.co.kr/contents/MKD/99/MKD99000001.jspx',
-                           headers={'User-Agent': 'Mozilla/5.0'},
-                           params=dict(market_gubun='ALL', 
-                                       gubun=1, 
-                                       schdate=date, 
-                                       code=otp.text))
+    result = requests.post("http://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd",
+                           headers = {'User-Agent': 'Mozilla/5.0'},
+                           params = dict(bld= 'dbms/MDC/STAT/standard/MDCSTAT03501',
+                                         searchType=1,
+                                         mktId='ALL',
+                                         trdDd=date,
+                                         isuCd='KR7005930003'))
 
     if not result.content:
         raise ValueError('Empty Result!')
 
     # Make DataFrame
-    df = pd.DataFrame(json.loads(result.content)['result'])
+    df = pd.DataFrame(json.loads(result.content)['output'])
 
     # Rename Columns, Remove unused columns
     columns={
-        'dvd_yld':'배당수익률',
-        'end_pr':'종가',
-        'isu_cd':'종목코드',
-        'isu_nm':'종목명',
-        'pbr':'PBR',
-        'per':'PER',
-        'work_dt':'기준일'
+        'DVD_YLD':'배당수익률',
+        'TDD_CLSPRC':'종가',
+        'ISU_SRT_CD':'종목코드',
+        'ISU_ABBRV':'종목명'
     }
     df = df.rename(columns=columns)
-    df =df[['종목명', '종목코드', '기준일', '종가',
-            'PER', 'PBR', '배당수익률']]
+    df =df[['종목명', '종목코드', '종가', 'PER', 'PBR', '배당수익률']]
 
     # Preprocess Variables
-    df['기준일'] = df['기준일'].apply(lambda x: x.replace('/', ''))
     for col in ['종가', 'PER', 'PBR', '배당수익률']:
         df[col] = df[col].apply(lambda x: x.replace(',', ''))
     df = df.replace(to_replace='-', value=np.NaN)
